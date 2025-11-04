@@ -34,9 +34,14 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	}
 
 	// 2. Parse request
-	req, err := s.parseRequest(clientConn)
+	req, replyCode, err := s.parseRequest(clientConn)
 	if err != nil {
 		slog.Error("Failed to parse request", slog.Any("err", err))
+		err := s.sendReply(clientConn, replyCode, nil)
+		if err != nil {
+			slog.Error("Failed to send reply", slog.Any("err", err))
+			return
+		}
 		return
 	}
 
