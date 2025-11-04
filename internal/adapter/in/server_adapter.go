@@ -52,10 +52,10 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	}
 
 	// 4. Resolve address if needed and connect
-	targetConn, err := s.proxyService.Connect(req.DstAddr, req.DstPort, req.AddrType)
-	if err != nil {
+	targetConn, reply := s.proxyService.Connect(req.DstAddr, req.DstPort, req.AddrType)
+	if targetConn == nil {
 		slog.Error("Failed to connect to target", slog.Any("err", err))
-		err := s.sendReply(clientConn, model.RepHostUnreachable, nil)
+		err := s.sendReply(clientConn, reply, nil)
 		if err != nil {
 			slog.Error("Failed to send reply", slog.Any("err", err))
 			return

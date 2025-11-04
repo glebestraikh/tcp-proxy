@@ -1,8 +1,10 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"net"
+	"syscall"
 	"tcp-proxy/internal/model"
 	"time"
 )
@@ -17,35 +19,45 @@ func NewProxyService(resolver *Resolver) *ProxyService {
 	}
 }
 
-func (p *ProxyService) Connect(addr string, port uint16, addrType byte) (net.Conn, error) {
+func (p *ProxyService) Connect(addr string, port uint16, addrType byte) (net.Conn, byte) {
 	var targetAddr string
 
 	switch addrType {
 	case model.AddrTypeIPv4:
-		// Direct IP connection
 		targetAddr = fmt.Sprintf("%s:%d", addr, port)
-
 	case model.AddrTypeDomain:
-		// Resolve domain name
 		ips, err := p.resolver.Resolve(addr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve domain %s: %w", addr, err)
+			return nil, model.RepHostUnreachable
 		}
 		if len(ips) == 0 {
-			return nil, fmt.Errorf("no IP addresses found for domain %s", addr)
+			return nil, model.RepHostUnreachable
 		}
-		// Use first resolved IP
 		targetAddr = fmt.Sprintf("%s:%d", ips[0].String(), port)
-
 	default:
-		return nil, fmt.Errorf("unsupported address type: %d", addrType)
+		return nil, model.RepAddrTypeNotSupported
 	}
 
-	// Connect to target with timeout
 	conn, err := net.DialTimeout("tcp", targetAddr, 10*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to %s: %w", targetAddr, err)
+		var opErr *net.OpError
+		if errors.As(err, &opErr) {
+			if opErr.Temporary() {
+				return nil, model.RepTTLExpired
+			}
+			switch {
+			case errors.Is(opErr.Err, syscall.ECONNREFUSED):
+				return nil, model.RepConnectionRefused
+			case errors.Is(opErr.Err, syscall.ENETUNREACH):
+				return nil, model.RepNetworkUnreachable
+			case errors.Is(opErr.Err, syscall.EHOSTUNREACH):
+				return nil, model.RepHostUnreachable
+			default:
+				return nil, model.RepGeneralFailure
+			}
+		}
+		return nil, model.RepGeneralFailure
 	}
 
-	return conn, nil
+	return conn, model.RepSuccess
 }

@@ -21,7 +21,7 @@ const (
 const (
 	RepSuccess              byte = 0x00
 	RepGeneralFailure       byte = 0x01
-	RepConnectionNotAllowed byte = 0x02
+	RepConnectionNotAllowed byte = 0x02 // no use
 	RepNetworkUnreachable   byte = 0x03
 	RepHostUnreachable      byte = 0x04
 	RepConnectionRefused    byte = 0x05
