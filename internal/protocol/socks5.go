@@ -1,4 +1,4 @@
-package model
+package protocol
 
 const (
 	SOCKS5Version byte = 0x05

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"syscall"
-	"tcp-proxy/internal/model"
+	"tcp-proxy/internal/protocol"
 	"time"
 )
 
@@ -23,19 +23,19 @@ func (p *ProxyService) Connect(addr string, port uint16, addrType byte) (net.Con
 	var targetAddr string
 
 	switch addrType {
-	case model.AddrTypeIPv4:
+	case protocol.AddrTypeIPv4:
 		targetAddr = fmt.Sprintf("%s:%d", addr, port)
-	case model.AddrTypeDomain:
+	case protocol.AddrTypeDomain:
 		ips, err := p.resolver.Resolve(addr)
 		if err != nil {
-			return nil, model.RepHostUnreachable
+			return nil, protocol.RepHostUnreachable
 		}
 		if len(ips) == 0 {
-			return nil, model.RepHostUnreachable
+			return nil, protocol.RepHostUnreachable
 		}
 		targetAddr = fmt.Sprintf("%s:%d", ips[0].String(), port)
 	default:
-		return nil, model.RepAddrTypeNotSupported
+		return nil, protocol.RepAddrTypeNotSupported
 	}
 
 	conn, err := net.DialTimeout("tcp", targetAddr, 10*time.Second)
@@ -43,21 +43,21 @@ func (p *ProxyService) Connect(addr string, port uint16, addrType byte) (net.Con
 		var opErr *net.OpError
 		if errors.As(err, &opErr) {
 			if opErr.Temporary() {
-				return nil, model.RepTTLExpired
+				return nil, protocol.RepTTLExpired
 			}
 			switch {
 			case errors.Is(opErr.Err, syscall.ECONNREFUSED):
-				return nil, model.RepConnectionRefused
+				return nil, protocol.RepConnectionRefused
 			case errors.Is(opErr.Err, syscall.ENETUNREACH):
-				return nil, model.RepNetworkUnreachable
+				return nil, protocol.RepNetworkUnreachable
 			case errors.Is(opErr.Err, syscall.EHOSTUNREACH):
-				return nil, model.RepHostUnreachable
+				return nil, protocol.RepHostUnreachable
 			default:
-				return nil, model.RepGeneralFailure
+				return nil, protocol.RepGeneralFailure
 			}
 		}
-		return nil, model.RepGeneralFailure
+		return nil, protocol.RepGeneralFailure
 	}
 
-	return conn, model.RepSuccess
+	return conn, protocol.RepSuccess
 }

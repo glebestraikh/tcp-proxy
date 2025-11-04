@@ -3,7 +3,7 @@ package in
 import (
 	"log/slog"
 	"net"
-	"tcp-proxy/internal/model"
+	"tcp-proxy/internal/protocol"
 	"tcp-proxy/internal/service"
 )
 
@@ -46,8 +46,8 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	}
 
 	// 3. Handle command
-	if req.Command != model.CmdConnect {
-		err := s.sendReply(clientConn, model.RepCommandNotSupported, nil)
+	if req.Command != protocol.CmdConnect {
+		err := s.sendReply(clientConn, protocol.RepCommandNotSupported, nil)
 		if err != nil {
 			slog.Error("Failed to send reply", slog.Any("err", err))
 			return
@@ -76,7 +76,7 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	}(targetConn)
 
 	// 5. Send success reply
-	if err := s.sendReply(clientConn, model.RepSuccess, targetConn); err != nil {
+	if err := s.sendReply(clientConn, protocol.RepSuccess, targetConn); err != nil {
 		slog.Error("Failed to send reply", slog.Any("err", err))
 		return
 	}

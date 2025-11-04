@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"tcp-proxy/internal/model"
+	"tcp-proxy/internal/protocol"
 )
 
 func (s *ServerAdapter) handleAuth(conn net.Conn) error {
@@ -14,7 +14,7 @@ func (s *ServerAdapter) handleAuth(conn net.Conn) error {
 		return fmt.Errorf("failed to read version: %w", err)
 	}
 	version := versionBuf[0]
-	if version != model.SOCKS5Version {
+	if version != protocol.SOCKS5Version {
 		return fmt.Errorf("unsupported SOCKS version: %d", version)
 	}
 
@@ -37,16 +37,16 @@ func (s *ServerAdapter) handleAuth(conn net.Conn) error {
 	// Check if NO AUTHENTICATION is supported
 	noAuthSupported := false
 	for _, method := range methods {
-		if method == model.AuthNone {
+		if method == protocol.AuthNone {
 			noAuthSupported = true
 			break
 		}
 	}
 
 	// Send response
-	response := []byte{model.SOCKS5Version, model.AuthNone}
+	response := []byte{protocol.SOCKS5Version, protocol.AuthNone}
 	if !noAuthSupported {
-		response[1] = model.AuthNoAccept
+		response[1] = protocol.AuthNoAccept
 	}
 
 	if _, err := conn.Write(response); err != nil {

@@ -3,15 +3,15 @@ package in
 import (
 	"encoding/binary"
 	"net"
-	"tcp-proxy/internal/model"
+	"tcp-proxy/internal/protocol"
 )
 
 func (s *ServerAdapter) sendReply(conn net.Conn, replyCode byte, targetConn net.Conn) error {
 	reply := []byte{
-		model.SOCKS5Version,
+		protocol.SOCKS5Version,
 		replyCode,
-		model.Reserved,
-		model.AddrTypeIPv4,
+		protocol.Reserved,
+		protocol.AddrTypeIPv4,
 		0, 0, 0, 0, // Bind address (0.0.0.0)
 		0, 0, // Bind port (0)
 	}
