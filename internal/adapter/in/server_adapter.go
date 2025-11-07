@@ -20,6 +20,7 @@ func NewServerAdapter(port int, proxyService *service.ProxyService) *ServerAdapt
 }
 
 func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
+	slog.Info("Client connected", slog.Any("remote_addr", clientConn.RemoteAddr()))
 	defer func() {
 		if err := clientConn.Close(); err != nil {
 			slog.Error("Client connection closing error", slog.Any("err", err))
@@ -67,6 +68,7 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 		}
 		return
 	}
+	slog.Info("Target connected", slog.Any("remote_addr", targetConn.RemoteAddr()))
 	defer func(targetConn net.Conn) {
 		err := targetConn.Close()
 		if err != nil {
@@ -82,5 +84,7 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	}
 
 	// 6. Relay data bidirectionally
+	slog.Info("Starting relay", slog.Any("client", clientConn.RemoteAddr()), slog.Any("target", targetConn.RemoteAddr()))
 	s.relay(clientConn, targetConn)
+	slog.Info("Relay finished", slog.Any("client", clientConn.RemoteAddr()), slog.Any("target", targetConn.RemoteAddr()))
 }
