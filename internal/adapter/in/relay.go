@@ -19,12 +19,6 @@ func (s *ServerAdapter) relay(client, target net.Conn) {
 				slog.Any("target_addr", target.RemoteAddr()),
 				slog.Any("err", err),
 			)
-		} else if err != nil && isIgnorableError(err) {
-			slog.Info("Error relaying data from client to target",
-				slog.Any("client_addr", client.RemoteAddr()),
-				slog.Any("target_addr", target.RemoteAddr()),
-				slog.Any("err", err),
-			)
 		}
 		if tcp, ok := target.(*net.TCPConn); ok {
 			if err := tcp.CloseWrite(); err != nil && !isIgnorableCloseError(err) {
@@ -38,12 +32,6 @@ func (s *ServerAdapter) relay(client, target net.Conn) {
 		_, err := io.Copy(client, target)
 		if err != nil && !isIgnorableError(err) {
 			slog.Error("Error relaying data from target to client",
-				slog.Any("client_addr", client.RemoteAddr()),
-				slog.Any("target_addr", target.RemoteAddr()),
-				slog.Any("err", err),
-			)
-		} else if err != nil && isIgnorableError(err) {
-			slog.Info("Error relaying data from client to target",
 				slog.Any("client_addr", client.RemoteAddr()),
 				slog.Any("target_addr", target.RemoteAddr()),
 				slog.Any("err", err),
