@@ -3,6 +3,7 @@ package in
 import (
 	"log/slog"
 	"net"
+	"strings"
 	"tcp-proxy/internal/protocol"
 	"tcp-proxy/internal/service"
 )
@@ -23,9 +24,15 @@ func (s *ServerAdapter) HandleConnection(clientConn net.Conn) {
 	slog.Info("Client connected", slog.Any("remote_addr", clientConn.RemoteAddr()))
 	defer func() {
 		if err := clientConn.Close(); err != nil {
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				return
+			}
+
 			slog.Error("Client connection closing error", slog.Any("err", err))
 		}
-		slog.Info("Client connection closed", slog.Any("remote_addr", clientConn.RemoteAddr()))
+
+		slog.Info("Client connection closed",
+			slog.Any("remote_addr", clientConn.RemoteAddr()))
 	}()
 
 	// 1. Handle authentication negotiation
